@@ -66,4 +66,12 @@ if os.path.exists(sample_path):
     
     fit, net_type = classify_network_extended(G, plot=True)
 else:
+
     print("File not found:", sample_path)
+
+
+######## - CONFIGURATION MODEL
+#deg_sequence = [3]*100  # example: all nodes degree 3
+#G_config = nx.configuration_model(deg_sequence)
+#G_config = nx.Graph(G_config)  # remove parallel edges & self-loops
+#G_config.remove_edges_from(nx.selfloop_edges(G_config))
