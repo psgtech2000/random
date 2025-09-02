@@ -1,0 +1,69 @@
+# -----------------------
+# 2) Classify network
+# -----------------------
+def classify_network_extended(G, plot=False):
+    degs = [d for _, d in G.degree() if d > 0]
+    if len(degs) == 0:
+        print("No positive-degree nodes. Cannot classify.")
+        return None
+
+    # Fit power-law
+    fit = powerlaw.Fit(degs, verbose=False)
+    # Compare with lognormal
+    R, p = fit.distribution_compare('power_law', 'lognormal')
+
+    # Compute degree stats
+    mean_deg = np.mean(degs)
+    std_deg = np.std(degs)
+    degs_array = np.array(degs)
+
+    # Check for ER: degrees roughly Poisson-like (mean ~ variance)
+    variance = np.var(degs_array)
+    er_threshold = 0.1  # allow 10% deviation
+    is_er = abs(mean_deg - variance) / mean_deg < er_threshold
+
+    # Check for Watts-Strogatz: high clustering + small avg path
+    avg_clust = nx.average_clustering(G)
+    try:
+        if nx.is_connected(G):
+            apl = nx.average_shortest_path_length(G)
+        else:
+            comp = max(nx.connected_components(G), key=len)
+            Gc = G.subgraph(comp).copy()
+            apl = nx.average_shortest_path_length(Gc)
+    except:
+        apl = np.nan
+    is_ws = avg_clust > 0.1 and apl < 10  # heuristic thresholds
+
+    # Decide network type
+    if R > 0 and p < 0.05:
+        net_type = "Scale-free (Power-law fits) ✅"
+    elif is_ws:
+        net_type = "Watts–Strogatz (Small-world) ✅"
+    elif is_er:
+        net_type = "Erdős–Rényi (Random) ✅"
+    else:
+        net_type = "Unknown type 🤔"
+
+    print("Network type:", net_type)
+
+    if plot:
+        fit.plot_ccdf(label="Empirical CCDF")
+        fit.power_law.plot_ccdf(label="Power-law fit")
+        plt.xlabel("Degree")
+        plt.ylabel("P(K ≥ k)")
+        plt.legend()
+        plt.show()
+
+    return fit, net_type
+
+# -----------------------
+# 3) Run on file
+# -----------------------
+if os.path.exists(sample_path):
+    G = load_graph_auto(sample_path)
+    print(f"Graph loaded: nodes={G.number_of_nodes()}, edges={G.number_of_edges()}")
+    
+    fit, net_type = classify_network_extended(G, plot=True)
+else:
+    print("File not found:", sample_path)
