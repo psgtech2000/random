@@ -1,0 +1,28 @@
+#GENERATE SCALE FREE FROM GIVEN GRAPH
+
+G_sf = nx.scale_free_graph(n)
+
+# --- Step 1: Load the graph ---
+path = "your_graph.gml"  # or "your_graph.txt"
+G_loaded = load_graph_auto(path)
+
+# --- Step 2: Compute number of nodes and average degree ---
+n = G_loaded.number_of_nodes()
+if is_directed_graph(G_loaded):
+    avg_degree = np.mean([d for _, d in G_loaded.in_degree()] + [d for _, d in G_loaded.out_degree()]) / 2
+else:
+    avg_degree = np.mean([d for _, d in G_loaded.degree()])
+
+print(f"Loaded graph: n={n}, avg_degree={avg_degree:.4f}")
+
+# --- Step 3: Compute ER probability (if needed) ---
+p = avg_degree / (n - 1)
+print(f"Equivalent ER probability p = {p:.6f}")
+
+# --- Step 4: Generate a scale-free graph (configuration model) ---
+G_sf = generate_powerlaw_configuration(n, gamma=2.5, ensure_simple=True)
+print(f"Generated scale-free graph: nodes={G_sf.number_of_nodes()}, edges={G_sf.number_of_edges()}")
+
+# Optional: visualize or report
+full_report(G_sf, name="Scale-Free Graph")
+

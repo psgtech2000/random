@@ -1,0 +1,45 @@
+#GENERATE ER FROM GIVEN GRAPH
+
+import matplotlib.pyplot as plt
+
+sample_path = "/content/facebook_combined.txt"
+if os.path.exists(sample_path):
+  G = load_graph_auto(sample_path)
+  n=G.number_of_nodes()
+  n = G.number_of_nodes()
+  degrees = [deg for _, deg in G.degree()]
+  avg_degree = np.mean(degrees)
+  p = avg_degree / (n - 1)  # for ER
+
+  print("Number of nodes (n):", n)
+  print("Average degree:", avg_degree)
+  print("Computed p:", p)
+  
+  er_graph=generate_er(n, p, seed=SEED)
+
+plt.figure(figsize=(6,6))
+nx.draw(er_graph, node_size=50)
+plt.show()
+
+#visulaisation
+nx.draw(
+    G,
+    node_color="orange",   # change node color
+    edge_color="lightgray",# change edge color
+    node_size=30,          # smaller nodes
+    alpha=0.7,             # transparency
+    with_labels=False      # no labels for large graphs
+)
+
+plt.show()
+
+nx.draw(
+    er_graph,
+    node_color="skyblue",   # change node color
+    edge_color="lightgray",# change edge color
+    node_size=30,          # smaller nodes
+    alpha=0.7,             # transparency
+    with_labels=False      # no labels for large graphs
+)
+
+plt.show()
