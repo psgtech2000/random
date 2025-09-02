@@ -37,9 +37,9 @@ def check_powerlaw_simple(G, plot=True):
     
     # Decide if power-law fits
     if R > 0 and p < 0.05:
-        print("Power-law fits the data ✅")
+        print("Power-law fits the data")
     else:
-        print("Power-law does not fit the data ❌")
+        print("Power-law does not fit the data")
     
     # Optional: plot CCDF
     if plot:
@@ -55,3 +55,4 @@ def check_powerlaw_simple(G, plot=True):
 # Example usage:
 G = generate_powerlaw_configuration(1000, gamma=2.5)
 fit = check_powerlaw_simple(G)
+
