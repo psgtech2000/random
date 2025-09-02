@@ -1,0 +1,57 @@
+#check power law fits or not 
+
+import powerlaw
+
+G = generate_powerlaw_configuration(1000, gamma=2.5)
+degs = [d for _, d in G.degree()]
+
+fit = powerlaw.Fit(degs)
+print(f"Estimated alpha: {fit.alpha:.2f}")
+print(f"xmin: {fit.xmin}")
+
+# Plot
+fit.plot_ccdf(label="Empirical CCDF")
+fit.power_law.plot_ccdf(label="Power law fit")
+plt.legend()
+plt.show()
+
+
+
+#complete check
+import powerlaw
+import matplotlib.pyplot as plt
+
+def check_powerlaw_simple(G, plot=True):
+    # Get positive-degree nodes only
+    degs = [d for _, d in G.degree() if d>0]
+    
+    if len(degs) == 0:
+        print("No positive-degree nodes to fit. Cannot check power law.")
+        return None
+    
+    # Fit power-law
+    fit = powerlaw.Fit(degs, verbose=False)
+    
+    # Compare with lognormal
+    R, p = fit.distribution_compare('power_law', 'lognormal')
+    
+    # Decide if power-law fits
+    if R > 0 and p < 0.05:
+        print("Power-law fits the data ✅")
+    else:
+        print("Power-law does not fit the data ❌")
+    
+    # Optional: plot CCDF
+    if plot:
+        fit.plot_ccdf(label="Empirical CCDF")
+        fit.power_law.plot_ccdf(label="Power-law fit")
+        plt.xlabel("Degree")
+        plt.ylabel("P(K ≥ k)")
+        plt.legend()
+        plt.show()
+    
+    return fit
+
+# Example usage:
+G = generate_powerlaw_configuration(1000, gamma=2.5)
+fit = check_powerlaw_simple(G)
