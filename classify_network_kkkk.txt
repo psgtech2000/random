@@ -1,0 +1,113 @@
+import networkx as nx
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import linregress
+import os
+
+def load_graph(filepath):
+    print(f"\n--- Loading Graph from {os.path.basename(filepath)} ---")
+    if filepath.endswith('.txt'):
+        return nx.read_edgelist(filepath, nodetype=int)
+    elif filepath.endswith('.csv'):
+        return nx.read_edgelist(filepath, delimiter=',', nodetype=int)
+    elif filepath.endswith('.gml'):
+        return nx.read_gml(filepath, label='id')
+    else:
+        raise ValueError("Unsupported format. Use txt, csv, or gml.")
+
+def classify_network(G, name):
+    print(f"\n--- Analyzing and Classifying: {name} ---")
+    
+    # === Step 1: Test for Scale-Free Property ===
+    degrees = np.array([d for _, d in G.degree()])
+    unique_degrees, counts = np.unique(degrees, return_counts=True)
+    probabilities = counts / len(degrees)
+    
+    # Fit a power-law to the log-log data
+    mask = (unique_degrees > 0) & (probabilities > 0)
+    log_k = np.log(unique_degrees[mask])
+    log_p = np.log(probabilities[mask])
+    
+    result = linregress(log_k, log_p)
+    r_squared = result.rvalue ** 2
+    gamma = -result.slope
+
+    print(f"Power-Law Fit R-squared: {r_squared:.4f}")
+    
+    if r_squared > 0.85:
+        print(f"CONCLUSION: The high R² value suggests the network is SCALE-FREE (γ ≈ {gamma:.2f}).")
+        return # Analysis is complete
+
+    # === Step 2: If not Scale-Free, distinguish between WS and ER ===
+    print("CONCLUSION: Low R² value suggests the network is NOT Scale-Free. Checking for Small-World properties...")
+
+    N = G.number_of_nodes()
+    M = G.number_of_edges()
+
+    # Properties of the real graph (must handle disconnected graphs)
+    if nx.is_connected(G):
+        L_real = nx.average_shortest_path_length(G)
+    else:
+        # Use the largest connected component for path length
+        largest_cc = max(nx.connected_components(G), key=len)
+        subgraph = G.subgraph(largest_cc)
+        L_real = nx.average_shortest_path_length(subgraph)
+
+    C_real = nx.average_clustering(G)
+    
+    print(f"Real Graph: Avg Path Length = {L_real:.4f}, Avg Clustering = {C_real:.4f}")
+
+    # Properties of a comparable random graph
+    p = (2 * M) / (N * (N - 1))
+    er_comparison_graph = nx.erdos_renyi_graph(N, p)
+    
+    if nx.is_connected(er_comparison_graph):
+        L_random = nx.average_shortest_path_length(er_comparison_graph)
+    else:
+        largest_cc_er = max(nx.connected_components(er_comparison_graph), key=len)
+        subgraph_er = er_comparison_graph.subgraph(largest_cc_er)
+        L_random = nx.average_shortest_path_length(subgraph_er)
+        
+    C_random = nx.average_clustering(er_comparison_graph)
+
+    print(f"Random Graph: Avg Path Length = {L_random:.4f}, Avg Clustering = {C_random:.4f}")
+
+    # Final Classification
+    # Heuristic: Clustering is an order of magnitude higher, path length is comparable
+    if C_real / C_random > 5 and L_real / L_random < 2:
+         print("CONCLUSION: High clustering and short path length suggest the network is WATTS-STROGATZ (Small-World).")
+    else:
+         print("CONCLUSION: Properties are similar to a random graph, suggesting it is ERDŐS-RÉNYI.")
+
+
+def main():
+    # --- Part 1: Demonstrate classification on generated graphs ---
+    N = 1000  # Number of nodes
+    avg_k = 10 # Average degree
+
+    # Generate an ER graph
+    p_er = avg_k / (N - 1)
+    er_graph = nx.erdos_renyi_graph(N, p_er)
+    classify_network(er_graph, "Generated ER Graph")
+
+    # Generate a Scale-Free graph
+    m_sf = int(avg_k / 2)
+    sf_graph = nx.barabasi_albert_graph(N, m_sf)
+    classify_network(sf_graph, "Generated Scale-Free Graph")
+
+    # Generate a Watts-Strogatz graph
+    k_ws = avg_k
+    p_ws = 0.1
+    ws_graph = nx.watts_strogatz_graph(N, k_ws, p_ws)
+    classify_network(ws_graph, "Generated Watts-Strogatz Graph")
+
+    sample_path = "D:/sem9/NS_Lab/facebook_combined.txt" # Example path
+    if os.path.exists(sample_path):
+        my_graph = load_graph(sample_path)
+        classify_network(my_graph, "Facebook Network")
+    else:
+        print(f"\nCould not find the sample file at: {sample_path}")
+
+
+if _name_ == "_main_":
+    main()
