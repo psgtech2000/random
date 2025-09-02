@@ -37,13 +37,13 @@ def classify_network_extended(G, plot=False):
 
     # Decide network type
     if R > 0 and p < 0.05:
-        net_type = "Scale-free (Power-law fits) ✅"
+        net_type = "Scale-free (Power-law fits)"
     elif is_ws:
-        net_type = "Watts–Strogatz (Small-world) ✅"
+        net_type = "Watts–Strogatz (Small-world)"
     elif is_er:
-        net_type = "Erdős–Rényi (Random) ✅"
+        net_type = "Erdős–Rényi (Random)"
     else:
-        net_type = "Unknown type 🤔"
+        net_type = "Unknown type"
 
     print("Network type:", net_type)
 
@@ -75,3 +75,4 @@ else:
 #G_config = nx.configuration_model(deg_sequence)
 #G_config = nx.Graph(G_config)  # remove parallel edges & self-loops
 #G_config.remove_edges_from(nx.selfloop_edges(G_config))
+
